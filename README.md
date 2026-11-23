@@ -1,76 +1,139 @@
-# The Last Dance · Juan Pablo — site oficial (simulação)
+# The Last Dance · Juan Pablo
 
-Site de divulgação e **venda fictícia** de ingressos do talk show musical de Juan Pablo.
-Nenhum pagamento é solicitado ou processado; os ingressos não têm valor comercial.
+Site oficial do talk show musical **The Last Dance**, apresentado por Juan Pablo. Tem divulgação do espetáculo,
+mapa de assentos, compra de ingressos (simulada, sem pagamento), ingresso digital com QR Code em PNG/PDF e
+consulta de ingresso por código.
 
-## Rodar
+> Os ingressos são fictícios: nenhum pagamento é solicitado ou processado.
+
+**Data:** 27/11/2026 · **Horário e local:** a anunciar
+
+---
+
+## Sumário
+
+1. [Tecnologias](#tecnologias)
+2. [Estrutura de pastas](#estrutura-de-pastas)
+3. [Rodar no computador](#rodar-no-computador)
+4. [Configurar o banco (Supabase)](#configurar-o-banco-supabase)
+5. [Publicar no GitHub Pages](#publicar-no-github-pages)
+6. [Onde editar o conteúdo](#onde-editar-o-conteúdo)
+7. [Administração](#administração)
+8. [Regras do sistema de ingressos](#regras-do-sistema-de-ingressos)
+
+---
+
+## Tecnologias
+
+React 19 · TypeScript · Vite · Tailwind CSS v4 · Supabase (Postgres) · Lucide · qrcode · html-to-image · jsPDF.
+Fontes locais via `@fontsource` (Limelight, Playfair Display, Cormorant Garamond, Josefin Sans).
+
+## Estrutura de pastas
+
+```
+.
+├── index.html                  Página de entrada (o Vite monta o site a partir dela)
+├── public/                     Arquivos copiados sem alteração (favicon, foto de Juan Pablo)
+├── src/
+│   ├── main.tsx                Ponto de partida do React
+│   ├── App.tsx                 Ordem das seções da página
+│   ├── index.css               Tema: cores, fontes, botões, assentos, texturas
+│   ├── config/                 ← CONTEÚDO EDITÁVEL
+│   │   ├── event.ts            Nome, data, horário, local, preço, limites
+│   │   ├── seating.ts          Fileiras e lugares do auditório
+│   │   └── artists.ts          Pistas dos artistas homenageados
+│   ├── sections/               Seções da página (Hero, Espetáculo, Artistas, Juan Pablo, Ingressos, Consulta)
+│   ├── booking/                Mapa de assentos, resumo da seleção, formulário, confirmação
+│   ├── tickets/                Ingresso digital e exportação PNG/PDF
+│   ├── components/             Navbar, rodapé e ornamentos visuais
+│   ├── domain/                 Regras: assentos, IDs, validação, formatação, tipos
+│   ├── services/               Acesso a dados (Supabase ou localStorage)
+│   └── hooks/                  Hooks React reutilizáveis
+├── supabase/
+│   ├── schema.sql              Cria tabelas, funções e permissões (rodar 1x)
+│   └── reset.sql               Zera compras, ingressos e reservas
+├── .github/workflows/deploy.yml  Publicação automática no GitHub Pages
+└── .env.example                Modelo das variáveis de ambiente
+```
+
+## Rodar no computador
+
+Requisito: Node.js 20 ou superior.
 
 ```bash
 npm install
-npm run dev      # desenvolvimento
-npm run build    # produção (gera /dist)
-npm run preview  # serve o build
+cp .env.example .env    # preencha com os dados do Supabase (opcional, veja abaixo)
+npm run dev             # abre em http://localhost:5173
 ```
 
-Stack: React 19 + TypeScript + Vite + Tailwind CSS v4 + Lucide + `qrcode` + `html-to-image` + `jspdf`.
-Fontes servidas localmente via `@fontsource` (Limelight, Playfair Display, Cormorant Garamond, Josefin Sans).
+Sem o `.env`, o site funciona em **modo local**: as compras ficam salvas só no seu navegador. Isso serve para testar.
 
-## Banco de dados (Supabase)
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Verifica os tipos e gera o site final em `dist/` |
+| `npm run preview` | Serve o conteúdo de `dist/` para conferência |
+| `npm run lint` | Análise estática do código |
 
-Quem tem cada lugar fica gravado no Supabase, compartilhado entre todos os visitantes.
+## Configurar o banco (Supabase)
 
-1. Crie um projeto grátis em supabase.com.
-2. No **SQL Editor**, rode `supabase/schema.sql` inteiro.
-3. Em **Project Settings → API**, copie a *Project URL* e a chave **anon**.
-4. Local: copie `.env.example` para `.env` e preencha. `npm run dev`.
-5. GitHub Pages: em *Settings → Secrets and variables → Actions*, crie `VITE_SUPABASE_URL` e
-   `VITE_SUPABASE_ANON_KEY`; em *Settings → Pages*, escolha **GitHub Actions**. Cada push na `main` publica
-   (`.github/workflows/deploy.yml`).
+O banco guarda quem tem cada lugar, e todos os visitantes veem o mesmo mapa.
 
-Sem essas variáveis o site funciona em modo local (localStorage, dados só no navegador).
+1. Crie um projeto grátis em [supabase.com](https://supabase.com).
+2. Abra o **SQL Editor**, cole todo o conteúdo de `supabase/schema.sql` e clique em **Run**.
+3. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**.
+4. Coloque esses dois valores no `.env` (para rodar no computador) e nos secrets do GitHub (para publicar).
 
-**Ver quem está em cada lugar:** Supabase → *Table Editor* → view `ocupacao` (assento, nome no ingresso,
-comprador, e-mail, telefone, código). Só você vê isso: o público não tem acesso às tabelas.
+> ⚠️ Use só a chave **anon**. A chave `service_role` dá acesso total ao banco e nunca pode ir para o código nem
+> para o GitHub.
 
-**Zerar o banco:** rode `supabase/reset.sql` no SQL Editor (apaga compras, ingressos e reservas).
+## Publicar no GitHub Pages
 
-Garantias no banco: um único ingresso válido por assento (índice único), reservas e compras sob trava
-(sem venda duplicada mesmo com cliques simultâneos), consulta pública sem e-mail/telefone.
+> O `index.html` deste repositório é o código-fonte e **não abre sozinho**. Quem monta o site final é o GitHub
+> Actions, a cada push. Não use a opção "Deploy from a branch".
 
-## Onde editar
+1. Crie um repositório no GitHub e envie o projeto:
+   ```bash
+   git remote add origin https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+   git push -u origin main
+   ```
+2. No repositório: **Settings → Secrets and variables → Actions → New repository secret**. Crie dois:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. Em **Actions**, rode o workflow **Deploy** (ou faça um novo push). O endereço aparece ao final:
+   `https://SEU-USUARIO.github.io/SEU-REPOSITORIO/`.
+
+Depois disso, cada push na branch `main` publica o site de novo automaticamente.
+
+## Onde editar o conteúdo
 
 | O quê | Arquivo |
 |---|---|
-| Nome do espetáculo, data, horário, local, preço, limite por compra, tempo de reserva, foto de Juan Pablo | `src/config/event.ts` |
-| Layout das fileiras / simulação de vendas prévias | `src/config/seating.ts` |
-| Artistas homenageados | `src/config/artists.ts` |
+| Nome do espetáculo, data, horário, local, limite por compra, tempo de reserva | `src/config/event.ts` |
+| Preço (oculto por padrão: `showPrices: false`) | `src/config/event.ts` |
+| Foto de Juan Pablo | coloque em `public/` e preencha `hostPhoto` em `src/config/event.ts` |
+| Fileiras e lugares | `src/config/seating.ts` |
+| Pistas dos artistas | `src/config/artists.ts` |
 
-Campos `null` aparecem no site como "A anunciar". Preços ficam ocultos (`showPrices: false`). Para exibir, defina `unitPriceCents` e `showPrices: true`.
+Campos `null` aparecem no site como "A anunciar".
 
-> O briefing cita 139 lugares por lado/278 no total, mas 11×8 + 4×9 + 1×8 + 1×6 = **138 por lado / 276**.
-> O mapa segue as fileiras descritas. Para corrigir, ajuste `SIDE_ROW_SEATS`.
+## Administração
 
-## Arquitetura
+- **Quem está em cada lugar:** Supabase → **Table Editor** → view `ocupacao` (assento, nome no ingresso, comprador,
+  e-mail, telefone, código do ingresso). Só aparece para você: visitantes não têm acesso.
+- **Zerar o banco:** rode `supabase/reset.sql` no SQL Editor. Essa ação apaga tudo e não pode ser desfeita.
+- **Cancelar um ingresso:** no Table Editor, mude `status` do ingresso para `cancelled`. O lugar volta a ficar livre.
 
-```
-src/
-  config/      configuração central (evento, assentos, artistas)
-  domain/      tipos, geração do mapa, IDs, validação, formatação
-  services/    TicketRepository (interface) + LocalStorageTicketRepository
-  hooks/       snapshot de assentos, reveal, media query, contagem regressiva
-  sections/    Hero, About, Artists, Host, Tickets, Lookup
-  booking/     SeatMap, SelectionPanel, CheckoutForm, Confirmation
-  tickets/     TicketCard (ingresso), exportação PNG/PDF
-```
+## Regras do sistema de ingressos
 
-Camada de dados: `TicketRepository` com duas implementações (`SupabaseTicketRepository` e `LocalStorageTicketRepository`), escolhida em `src/services/index.ts`.
-
-### Regras de negócio implementadas
-- Numeração: fileiras A–Q (A mais próxima do palco); lado esquerdo 1..n, lado direito n+1..2n (ex.: A1–A8 / A9–A16).
-- Estados: disponível, selecionado, em processo de compra (reserva temporária) e ocupado.
-- Ao clicar em CONTINUAR, os assentos ficam reservados por `holdMinutes` (visível como "em processo de compra" em outras abas).
-- Compra revalida disponibilidade imediatamente antes de gravar → sem venda duplicada do mesmo assento.
-- IDs únicos `JP-XXXX-XXXX` (alfabeto sem caracteres ambíguos), verificados contra os existentes.
-- CPF opcional, validado por dígito verificador; armazenado apenas mascarado.
-- Sincronização entre abas via evento `storage`.
-- Acessibilidade: navegação do mapa por setas (roving tabindex), `aria-pressed`, rótulos por assento, `prefers-reduced-motion`.
+- 276 lugares: 17 fileiras (A–Q) em cada lado do corredor. O palco fica junto à fileira Q.
+- Numeração contínua da esquerda para a direita: lado esquerdo 1..n, lado direito n+1..2n (ex.: A1–A8 | A9–A16).
+- Estados do assento: disponível, selecionado, em processo de compra e ocupado.
+- Ao clicar em **Continuar**, os lugares ficam reservados por 10 minutos.
+- O banco aceita **um único ingresso válido por assento**, e reservas e compras são feitas sob trava, então
+  não há venda duplicada mesmo com cliques simultâneos.
+- IDs únicos no formato `JP-XXXX-XXXX`, sem caracteres ambíguos.
+- A consulta pública mostra nome, assento e situação, nunca e-mail ou telefone.
+- O CPF é opcional, validado e guardado só mascarado (`***.***.123-45`).
+- Limite de 8 ingressos por compra.
