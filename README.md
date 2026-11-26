@@ -6,7 +6,7 @@ consulta de ingresso por código.
 
 > Os ingressos são fictícios: nenhum pagamento é solicitado ou processado.
 
-**Data:** 27/11/2026 · **Horário e local:** a anunciar
+**Data:** 27/11/2026 · **Horário:** 13h · **Local:** Auditório do CEFET/RJ, Campus Nova Iguaçu
 
 ---
 
@@ -80,7 +80,7 @@ Sem o `.env`, o site funciona em **modo local**: as compras ficam salvas só no 
 O banco guarda quem tem cada lugar, e todos os visitantes veem o mesmo mapa.
 
 1. Crie um projeto grátis em [supabase.com](https://supabase.com).
-2. Abra o **SQL Editor**, cole todo o conteúdo de `supabase/schema.sql` e clique em **Run**.
+2. Abra o **SQL Editor**, cole todo o conteúdo de `supabase/schema.sql` e clique em **Run**. Depois, numa nova query, faça o mesmo com `supabase/migration-002-restricoes.sql`.
 3. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**.
 4. Coloque esses dois valores no `.env` (para rodar no computador) e nos secrets do GitHub (para publicar).
 
@@ -134,6 +134,8 @@ Campos `null` aparecem no site como "A anunciar".
 - O banco aceita **um único ingresso válido por assento**, e reservas e compras são feitas sob trava, então
   não há venda duplicada mesmo com cliques simultâneos.
 - IDs únicos no formato `JP-XXXX-XXXX`, sem caracteres ambíguos.
-- A consulta pública mostra nome, assento e situação, nunca e-mail ou telefone.
 - O CPF é opcional, validado e guardado só mascarado (`***.***.123-45`).
-- Limite de 8 ingressos por compra.
+- Limite de 4 ingressos por pessoa (mesmo e-mail **ou** mesmo telefone), verificado no banco. Para mudar, altere
+  `_max_tickets_per_person` em `supabase/migration-002-restricoes.sql` (e rode de novo) e `maxTicketsPerPerson` em `src/config/event.ts`.
+- A consulta de ingresso exige o **código e o e-mail** de quem comprou; só o código não abre o ingresso.
+- Os lugares do mapa são **ilustrativos**: no dia, os assentos são livres. O aviso aparece no mapa, no checkout e no ingresso.
