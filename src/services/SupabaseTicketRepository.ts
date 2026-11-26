@@ -31,6 +31,10 @@ const MESSAGES: Record<BookingErrorCode, (seats: string[]) => string> = {
   SEAT_UNAVAILABLE: (s) => `Assento(s) ${s.join(', ')} acabaram de ficar indisponíveis.`,
   HOLD_EXPIRED: () => 'O tempo de reserva expirou. Selecione os assentos novamente.',
   LIMIT_EXCEEDED: () => `Limite de ${EVENT.maxSeatsPerOrder} ingressos por compra.`,
+  PERSON_LIMIT: ([left, max]) =>
+    Number(left) > 0
+      ? `Cada pessoa pode emitir até ${max} ingressos. Você ainda pode emitir ${left}.`
+      : `Cada pessoa pode emitir até ${max} ingressos, e esse limite já foi atingido com este e-mail ou telefone.`,
   EMPTY: () => 'Selecione ao menos um assento.',
   UNKNOWN: () => 'Não foi possível concluir. Verifique sua conexão e tente novamente.',
 }
@@ -40,13 +44,20 @@ function toBookingError(err: PostgrestError | Error): BookingError {
   const code = (Object.keys(MESSAGES) as BookingErrorCode[]).find((c) => msg.includes(c)) ?? 'UNKNOWN'
   const details = 'details' in err && typeof err.details === 'string' ? err.details : ''
   const seats = code === 'SEAT_UNAVAILABLE' || code === 'HOLD_EXPIRED' ? details.split(',').filter(Boolean) : []
+  if (code === 'PERSON_LIMIT') return new BookingError(code, MESSAGES.PERSON_LIMIT(details.split('|')))
   if (code === 'UNKNOWN' && msg.includes('check constraint')) return new BookingError('UNKNOWN', 'Dados do comprador inválidos.')
   return new BookingError(code, MESSAGES[code](seats), seats)
 }
 
-function readMyIds(): string[] {
+interface MyTicketRef {
+  id: string
+  email: string
+}
+
+function readMine(): MyTicketRef[] {
   try {
-    return JSON.parse(localStorage.getItem(MY_TICKETS_KEY) ?? '[]') as string[]
+    const raw = JSON.parse(localStorage.getItem(MY_TICKETS_KEY) ?? '[]') as unknown[]
+    return raw.filter((r): r is MyTicketRef => typeof r === 'object' && r !== null && 'id' in r && 'email' in r)
   } catch {
     return []
   }
@@ -114,7 +125,7 @@ export class SupabaseTicketRepository implements TicketRepository {
     const res = data as { order: Order; tickets: TicketRow[] }
     const tickets = res.tickets.map(toTicket)
     try {
-      localStorage.setItem(MY_TICKETS_KEY, JSON.stringify([...readMyIds(), ...tickets.map((t) => t.id)]))
+      localStorage.setItem(MY_TICKETS_KEY, JSON.stringify([...readMine(), ...tickets.map((t) => ({ id: t.id, email: res.order.buyer.email }))]))
     } catch {
       /* armazenamento indisponível: os ingressos continuam no banco */
     }
@@ -122,15 +133,15 @@ export class SupabaseTicketRepository implements TicketRepository {
     return { order: res.order, tickets }
   }
 
-  private async fetchTickets(ids: string[]): Promise<Ticket[]> {
+  private async fetchTickets(ids: string[], email: string): Promise<Ticket[]> {
     if (!ids.length) return []
-    const { data, error } = await this.db.rpc('find_tickets', { p_ids: ids })
+    const { data, error } = await this.db.rpc('get_tickets', { p_ids: ids, p_email: email })
     if (error) throw toBookingError(error)
     return (data as TicketRow[]).map(toTicket)
   }
 
-  async findTicket(id: string) {
-    const [ticket] = await this.fetchTickets([id])
+  async findTicket(id: string, email: string) {
+    const [ticket] = await this.fetchTickets([id], email)
     if (!ticket) return null
     // A consulta pública não expõe contatos do comprador.
     const order: Order = {
@@ -144,7 +155,10 @@ export class SupabaseTicketRepository implements TicketRepository {
   }
 
   async listTickets() {
-    return this.fetchTickets(readMyIds())
+    const byEmail = new Map<string, string[]>()
+    for (const r of readMine()) byEmail.set(r.email, [...(byEmail.get(r.email) ?? []), r.id])
+    const lists = await Promise.all([...byEmail].map(([email, ids]) => this.fetchTickets(ids, email)))
+    return lists.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
   /** Só limpa a lista deste navegador. Para zerar o banco, rode supabase/reset.sql. */

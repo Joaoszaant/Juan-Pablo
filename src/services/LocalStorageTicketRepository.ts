@@ -124,6 +124,24 @@ export class LocalStorageTicketRepository implements TicketRepository {
     if (!seatIds.length) throw new BookingError('EMPTY', 'Nenhum assento selecionado.')
 
     // Revalida imediatamente antes de gravar — evita compra duplicada do mesmo assento.
+    const tickets0 = read<Ticket[]>(KEY_TICKETS, [])
+    const orders0 = read<Order[]>(KEY_ORDERS, [])
+    const digits = (p: string) => p.replace(/\D/g, '')
+    const mineOrders = new Set(
+      orders0
+        .filter((o) => o.buyer.email === buyer.email || digits(o.buyer.phone) === digits(buyer.phone))
+        .map((o) => o.id),
+    )
+    const already = tickets0.filter((t) => t.status === 'valid' && mineOrders.has(t.orderId)).length
+    const max = EVENT.maxTicketsPerPerson
+    if (already + seatIds.length > max)
+      throw new BookingError(
+        'PERSON_LIMIT',
+        max - already > 0
+          ? `Cada pessoa pode emitir até ${max} ingressos. Você ainda pode emitir ${max - already}.`
+          : `Cada pessoa pode emitir até ${max} ingressos, e esse limite já foi atingido com este e-mail ou telefone.`,
+      )
+
     const snap = this.computeSnapshot(sessionId)
     const taken = seatIds.filter((s) => snap.occupied.has(s) || snap.heldByOthers.has(s))
     if (taken.length)
@@ -168,12 +186,12 @@ export class LocalStorageTicketRepository implements TicketRepository {
     return { order, tickets: newTickets }
   }
 
-  async findTicket(id: string) {
+  async findTicket(id: string, email: string) {
     await wait(this.latency)
     const ticket = read<Ticket[]>(KEY_TICKETS, []).find((t) => t.id === id)
     if (!ticket) return null
     const order = read<Order[]>(KEY_ORDERS, []).find((o) => o.id === ticket.orderId)
-    return order ? { ticket, order } : null
+    return order && order.buyer.email === email.trim().toLowerCase() ? { ticket, order } : null
   }
 
   async listTickets() {

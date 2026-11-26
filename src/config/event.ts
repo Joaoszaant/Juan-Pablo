@@ -38,6 +38,8 @@ export interface EventConfig {
   }
   /** Limite de ingressos por compra. */
   maxSeatsPerOrder: number
+  /** Limite total por pessoa (mesmo e-mail ou telefone). No Supabase, ajuste também em migration-002. */
+  maxTicketsPerPerson: number
   /** Minutos em que os assentos ficam reservados durante o checkout. */
   holdMinutes: number
   /** Prefixo dos IDs de ingresso (ex.: JP-7K2M-Q9XA). */
@@ -58,14 +60,15 @@ export const EVENT: EventConfig = {
     'Prepare-se para uma experiência que une música, entretenimento, entrevistas e performances inesquecíveis. Juan Pablo recebe grandes nomes da música em um espetáculo que celebra a arte, os encontros e as emoções.',
 
   date: '2026-11-27',
-  time: null,
+  time: '13:00',
   doorsOpen: null,
-  venue: { name: null, address: null, city: null },
+  venue: { name: 'Auditório do CEFET/RJ', address: null, city: 'Campus Nova Iguaçu' },
 
   // Preços ocultos. Para exibir, defina unitPriceCents e showPrices: true.
   pricing: { unitPriceCents: 0, currency: 'BRL', isPlaceholder: false, showPrices: false },
 
-  maxSeatsPerOrder: 8,
+  maxSeatsPerOrder: 4,
+  maxTicketsPerPerson: 4,
   holdMinutes: 10,
   ticketIdPrefix: 'JP',
   hostPhoto: null,

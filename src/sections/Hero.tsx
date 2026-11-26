@@ -160,7 +160,7 @@ export function Hero() {
               <Icon size={18} className="shrink-0 text-gold-400" aria-hidden="true" />
               <div className="text-left">
                 <dt className="text-[0.62rem] tracking-[0.35em] text-cream/50 uppercase">{label}</dt>
-                <dd className="font-serif text-base text-gold-100">{value}</dd>
+                <dd className="font-serif text-base text-gold-100 [font-variant-numeric:lining-nums]">{value}</dd>
               </div>
             </div>
           ))}

@@ -29,7 +29,7 @@ export function Confirmation({ result, onNewPurchase }: { result: PurchaseResult
         <h3 className="text-gold mt-4 font-serif text-4xl font-bold sm:text-5xl">Compra simulada confirmada</h3>
         <p className="mt-4 font-editorial text-xl text-cream/75">
           Obrigado, {order.buyer.fullName.split(' ')[0]}. {tickets.length === 1 ? 'Seu ingresso foi emitido' : `Seus ${tickets.length} ingressos foram emitidos`}.
-          Guarde o código de cada ingresso para consultá-lo depois.
+          Guarde o código de cada ingresso: para consultá-lo depois, você vai precisar dele e do e-mail usado na compra. O assento é ilustrativo e, no dia, os lugares são livres.
         </p>
         <p className="mt-3 text-sm tracking-[0.15em] text-cream/50 uppercase">
           Pedido {order.id}{EVENT.pricing.showPrices ? ` · Total ${formatMoney(order.totalCents)}` : ''} · Ingressos fictícios

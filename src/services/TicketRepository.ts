@@ -11,7 +11,8 @@ export interface TicketRepository {
   holdSeats(sessionId: string, seatIds: string[]): Promise<{ expiresAt: number }>
   releaseHold(sessionId: string): Promise<void>
   purchase(input: PurchaseInput): Promise<PurchaseResult>
-  findTicket(id: string): Promise<{ ticket: Ticket; order: Order } | null>
+  /** Só encontra o ingresso se o e-mail for o do comprador. */
+  findTicket(id: string, email: string): Promise<{ ticket: Ticket; order: Order } | null>
   listTickets(): Promise<Ticket[]>
   /** Remove todas as compras simuladas deste navegador. */
   resetSimulation(): Promise<void>
@@ -32,7 +33,7 @@ export interface PurchaseResult {
   tickets: Ticket[]
 }
 
-export type BookingErrorCode = 'SEAT_UNAVAILABLE' | 'HOLD_EXPIRED' | 'LIMIT_EXCEEDED' | 'EMPTY' | 'UNKNOWN'
+export type BookingErrorCode = 'SEAT_UNAVAILABLE' | 'HOLD_EXPIRED' | 'LIMIT_EXCEEDED' | 'PERSON_LIMIT' | 'EMPTY' | 'UNKNOWN'
 
 export class BookingError extends Error {
   code: BookingErrorCode

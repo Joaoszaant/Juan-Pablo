@@ -142,8 +142,8 @@ export function TicketCard({ ticket, nodeRef }: { ticket: Ticket; nodeRef?: Ref<
             <Field label="Lado" value={sideLabel(ticket.side).replace('Lado ', '')} />
           </div>
           <div style={{ marginTop: 14, display: 'flex', justifyContent: 'space-between', fontFamily: 'Josefin Sans', fontSize: 9, letterSpacing: '0.25em', color: 'rgba(242,230,204,.55)', textTransform: 'uppercase' }}>
-            <span>Local: {formatVenue()}</span>
-            <span>Ingresso fictício · simulação</span>
+            <span style={{ whiteSpace: 'nowrap' }}>Local: {formatVenue()}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>Ingresso fictício</span>
           </div>
         </div>
       </div>
@@ -173,9 +173,9 @@ export function TicketCard({ ticket, nodeRef }: { ticket: Ticket; nodeRef?: Ref<
         </div>
         <div style={{ marginTop: 10, fontFamily: 'Josefin Sans', fontWeight: 700, fontSize: 13, letterSpacing: '0.14em' }}>{ticket.id}</div>
         <div style={{ marginTop: 'auto', fontFamily: 'Josefin Sans', fontSize: 7.5, letterSpacing: '0.2em', textAlign: 'center', color: 'rgba(28,9,16,.6)', textTransform: 'uppercase', lineHeight: 1.5 }}>
-          Sem valor comercial
+          Assento ilustrativo
           <br />
-          Não representa compra real
+          Lugares livres no dia
         </div>
       </div>
     </div>

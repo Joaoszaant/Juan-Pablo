@@ -15,7 +15,7 @@ export function formatEventDate(style: 'long' | 'short' = 'long'): string {
     : { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export const formatEventTime = () => (EVENT.time ? EVENT.time.replace(':', 'h') : TBA)
+export const formatEventTime = () => (EVENT.time ? EVENT.time.replace(':00', 'h').replace(':', 'h') : TBA)
 
 export function formatVenue(): string {
   const { name, city } = EVENT.venue

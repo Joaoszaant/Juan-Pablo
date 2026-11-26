@@ -173,7 +173,8 @@ export function CheckoutForm({ seatIds, holdExpiresAt, submitting, onBack, onExp
             />
             <span>
               Entendo que esta é uma <strong className="text-gold-200">compra fictícia</strong>: nenhum pagamento é solicitado ou
-              processado e os ingressos gerados não têm valor comercial.
+              processado, os ingressos gerados não têm valor comercial e o <strong className="text-gold-200">assento é
+              ilustrativo</strong>: no dia, posso me sentar em outro lugar.
             </span>
           </label>
           {errors.acceptedSimulation && <p role="alert" className="mt-2 text-sm text-[#f08a9a]">{errors.acceptedSimulation}</p>}

@@ -59,6 +59,7 @@ export function Lookup() {
   const [state, setState] = useState<LookupState>({ kind: 'idle' })
   const [viewing, setViewing] = useState<Ticket | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [email, setEmail] = useState('')
   const tickets = useTickets()
 
   const search = async (e?: FormEvent, raw = query) => {
@@ -67,10 +68,12 @@ export function Lookup() {
     if (!id) return setState({ kind: 'invalid', message: 'Digite o código do ingresso.' })
     if (!TICKET_ID_PATTERN.test(id))
       return setState({ kind: 'invalid', message: 'Código em formato inválido. Exemplo: JP-7K2M-Q9XA.' })
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()))
+      return setState({ kind: 'invalid', message: 'Informe o e-mail usado na compra.' })
     setQuery(id)
     setState({ kind: 'loading' })
     try {
-      const found = await repository.findTicket(id)
+      const found = await repository.findTicket(id, email.trim().toLowerCase())
       setState(found ? { kind: 'found', ...found } : { kind: 'notFound', id })
     } catch {
       setState({ kind: 'invalid', message: 'Não foi possível consultar agora. Tente novamente.' })
@@ -82,10 +85,10 @@ export function Lookup() {
       <div aria-hidden="true" className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 40% at 50% 0%, rgb(122 19 38 / .3), transparent 70%)' }} />
       <div className="relative mx-auto max-w-5xl px-5 lg:px-8">
         <SectionHeading id="lookup-title" eyebrow="Bilheteria" title="Consultar ingresso">
-          Informe o código impresso no ingresso para verificar sua validade.
+          Informe o código do ingresso e o e-mail usado na compra. Por segurança, o ingresso só aparece para quem comprou.
         </SectionHeading>
 
-        <form onSubmit={search} className="mx-auto mt-12 flex max-w-2xl flex-col gap-3 sm:flex-row" role="search" aria-label="Consultar ingresso por código">
+        <form onSubmit={search} className="mx-auto mt-12 grid max-w-2xl gap-3 sm:grid-cols-[1fr_1fr_auto]" role="search" aria-label="Consultar ingresso por código e e-mail">
           <label htmlFor="ticket-id" className="sr-only">Código do ingresso</label>
           <input
             id="ticket-id"
@@ -94,8 +97,20 @@ export function Lookup() {
             placeholder="JP-XXXX-XXXX"
             autoComplete="off"
             spellCheck={false}
-            className="field-input flex-1 !py-4 text-center font-serif !text-xl tracking-[0.2em] uppercase sm:text-left"
+            className="field-input !py-4 text-center font-serif !text-lg tracking-[0.15em] uppercase sm:text-left"
             aria-invalid={state.kind === 'invalid' || state.kind === 'notFound'}
+            aria-describedby="lookup-result"
+          />
+          <label htmlFor="ticket-email" className="sr-only">E-mail usado na compra</label>
+          <input
+            id="ticket-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="E-mail da compra"
+            className="field-input !py-4"
             aria-describedby="lookup-result"
           />
           <button type="submit" className="btn btn-gold" disabled={state.kind === 'loading'}>
@@ -110,7 +125,7 @@ export function Lookup() {
           {state.kind === 'notFound' && (
             <p className="flex items-start gap-2 border border-scarlet/60 bg-scarlet/15 px-4 py-3 text-sm">
               <CircleAlert size={17} className="mt-0.5 shrink-0 text-[#f08a9a]" />
-              <span>Nenhum ingresso encontrado com o código <strong className="font-serif tracking-wider">{state.id}</strong>. Confira se digitou corretamente.</span>
+              <span>Nenhum ingresso encontrado com o código <strong className="font-serif tracking-wider">{state.id}</strong> para esse e-mail. Confira o código e use o mesmo e-mail da compra.</span>
             </p>
           )}
           {state.kind === 'found' && (
@@ -174,7 +189,6 @@ export function Lookup() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button type="button" aria-label={`Consultar ingresso ${t.id}`} className="btn btn-outline !px-4 !py-2 !text-[0.65rem]" onClick={() => { setQuery(t.id); void search(undefined, t.id) }}>Consultar</button>
                     <button type="button" className="btn btn-gold !px-4 !py-2 !text-[0.65rem]" aria-label={`Ver ingresso ${t.id}`} onClick={() => setViewing(t)}>Ver ingresso</button>
                   </div>
                 </li>

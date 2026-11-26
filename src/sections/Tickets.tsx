@@ -1,4 +1,4 @@
-import { CircleAlert, Info, LoaderCircle } from 'lucide-react'
+import { Armchair, CircleAlert, Info, LoaderCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { CheckoutForm } from '../booking/CheckoutForm'
 import { Confirmation } from '../booking/Confirmation'
@@ -140,6 +140,14 @@ export function Tickets() {
           <Info size={17} className="mt-0.5 shrink-0 text-gold-400" aria-hidden="true" />
           <span><strong className="text-gold-200">Simulação:</strong> os ingressos são fictícios e não representam compra real. Nenhum pagamento é solicitado.</span>
         </p>
+        <p className="mx-auto mt-3 flex max-w-2xl items-start justify-center gap-2 border border-scarlet/60 bg-scarlet/15 px-4 py-3 text-center text-sm text-cream/90">
+          <Armchair size={17} className="mt-0.5 shrink-0 text-gold-300" aria-hidden="true" />
+          <span>
+            <strong className="text-gold-200">Lugares meramente ilustrativos:</strong> o mapa serve só para você visualizar o
+            auditório. No dia, os assentos são livres e você pode se sentar em outro lugar. Limite de{' '}
+            {EVENT.maxTicketsPerPerson} ingressos por pessoa.
+          </span>
+        </p>
 
         {/* Etapas */}
         <ol className="mx-auto mt-10 flex max-w-md items-center justify-between" aria-label="Etapas da compra">
@@ -186,7 +194,7 @@ export function Tickets() {
                   <SeatMap snapshot={snapshot} selected={selected} onToggle={toggle} />
                 )}
                 <p className="mt-6 text-center text-xs tracking-[0.2em] text-cream/45 uppercase">
-                  {available} de {TOTAL_SEATS} lugares disponíveis
+                  {available} de {TOTAL_SEATS} lugares disponíveis · posições ilustrativas
                 </p>
               </div>
               <div className="hidden lg:block">
